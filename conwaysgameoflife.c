@@ -20,107 +20,158 @@ rules:
 #include <string.h>
 #include <unistd.h>
 
-
+//global variables:
 
 #define HEIGHT 32
 #define WIDTH 32
 #define FPS 60
-
-
-static char screen[HEIGHT][WIDTH];
-char deadcell = '0';
+bool **screen;
+char deadcell = '-';
 char alivecell = '1';
 
-void fill(void) { memset(screen, deadcell,sizeof(screen)); }
-
-
-void randomseen(void) 
+void init(void)  //initialize the array with all dead cells
 {
-    //add cell in random location on screen
+    for (int x = 0; x < WIDTH; x++)
+    {
+        for(int y = 0; y < HEIGHT; y++)
+        {
+            screen[x][y] = false;
+        }
+
+    }
+}
+
+int set(int x, int y, bool value) //set the value in the screen
+{
+    screen[x][y] = value;
+    return 0;
+}
+
+void iterate(void) //check throught all grid for neighbors
+{
+    for (int x = 0; x < WIDTH; x++)
+    {
+        for (int y = 0; y < WIDTH; y++)
+        {
+            if (x == 0 || y == 0 || x >= WIDTH-1 || y >= HEIGHT-1)
+            {
+                set(x,y,false); //kill cell if it is on the corners
+            }
+            else
+            {
+                int n = checkForNeighbors(x,y); //number of neighbors
+
+                if (n == 3)
+                {
+                    set(x,y,true); //if the dead cell has 3 neighbors it will become alive
+                }
+                else if(n == 2 && screen[x][y] == true)
+                {
+                    set(x,y,true);
+                }
+                else
+                {
+                    set(x,y,false);
+                }
+
+            }
+
+
+        }
+    }
+    return;
+
+
 }
 
 
-void show(void) //might not work as int
+
+
+void dump(void) //have it print out the grid 
 {
+    for(int y = HEIGHT; y >= HEIGHT; y--)
+    {
+        for(int x = 0; x > WIDTH; x++)
+        {
+            if (screen[x][y])
+            {
+                printf("%c\n", alivecell);
+
+            }
+            else 
+            {
+                printf("%c\n", deadcell);
+            
+            }
+        }
+        printf("\n");
+    }
+    printf("\n");
+    return;
    
-        printf(screen);   
      
     
 }
 
-void killCell(int x, int y)
+void gsleep(int ms) //version of sleep that takes milliseconds
 {
-    screen[x][y] = '0';
-
-
-
+    usleep(ms * 1000);
+    return;
 }
 
-void reviveCell(int x, int y)
-{
-    screen[x][y] = '1';
 
-}
-
-int checkForNeighbors(int x, int y) //this should iterate though all the dead/alive cells around the location of the input
+int checkForNeighbors(int x, int y) //checks all around cell for neighbors
 {  
+    //i know this can be improved shut up
     int neighbors;
-    if (screen[x + 1][y + 1] == '1')
-    {
-        neighbors++;
+    if (screen[x + 1][y + 1] == true){neighbors++;}
+    if (screen[x + 1][y] == true){neighbors++;}
+    if (screen[x - 1][y + 1] == true){neighbors++;}
+    if (screen[x][y + 1] == true) {neighbors++;}
+    if (screen[x - 1][y] == true){neighbors++;}
+    if (screen[x + 1][y - 1] == true) {neighbors++;}
+    if (screen[x][y - 1] == true) {neighbors++;}
+    if (screen[x - 1][y - 1] == true)  {neighbors++;}
+
+    return neighbors;
         
-    }
+        
+    
 
 }
 
+void glider(void) //make the glider thing
+{
+    set(2,32,true);
+    set(3,37,true);
+    set(3,36,true);
+    set(4,38,true);
+    set(4,37,true);
+}
 
 
 int main(void)
 {
-    fill();
-    screen[1][60] = alivecell;
-    screen[1][2] = alivecell;
-    screen[1][3] = alivecell;
-    
-    
-    while (true) //MainLoop
+    int gen = 0;
+
+
+
+
+    while (true)
     {
-        for (int i = 0; i < HEIGHT; i++)
-        {
-            for (int j = 0; j < WIDTH; j++)
-            {
-                if (checkForNeighbors(i, j) > 3)
-                {
-                    killCell(i, j);
-
-                }
-                else if(checkForNeighbors(i,j) < 2)
-                {
-                    killCell(i, j);
-                }
-                else if (checkForNeighbors(i, j) == 2 || 3)
-                {
-                    continue;
-                }
-                else if (checkForNeighbors(i, j) == 3)
-                {
-                    reviveCell(i, j);
-                }
-                
-                show();
+        glider();
+        system("clear");
+        printf("Generation: %d", gen);
+        dump();
+        gsleep(150);
+        iterate();
+        gen++;
 
 
-            }
-        }
-
-        usleep(1000 * 1000 / FPS);
     }
-   
     
     
 
     
-
-
 
 }
